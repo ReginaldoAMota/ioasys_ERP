@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model dbo_role {
+  id                 String               @id(map: "dbo.role_pk") @unique(map: "dbo.role_id_uindex") @db.VarChar(50)
+  title              String               @db.VarChar(50)
+  dbo_access_control dbo_access_control[]
+
+  @@map("dbo.role")
+}
+
+model dbo_sector {
+  id                 String               @id(map: "dbo.sector_pk") @unique(map: "dbo.sector_id_uindex") @db.VarChar(50)
+  title              String               @db.VarChar(50)
+  dbo_access_control dbo_access_control[]
+  dbo_call           dbo_call[]
+
+  @@map("dbo.sector")
+}
+
+model dbo_status {
+  id                String              @id(map: "dbo.status_pk") @unique(map: "dbo.status_id_uindex") @db.VarChar(50)
+  title             String              @db.VarChar(50)
+  dbo_user_business dbo_user_business[]
+
+  @@map("dbo.status")
+}
+
+model dbo_user {
+  id                 String              @id(map: "dbo.user_pk") @unique(map: "dbo.user_id_uindex") @db.VarChar(50)
+  email              String              @db.VarChar(50)
+  password           String              @db.VarChar(50)
+  company_id         String?             @db.VarChar(50)
+  access_control_id  Int?
+  dbo_access_control dbo_access_control? @relation(fields: [access_control_id], references: [id], onDelete: Cascade, map: "dbo.user_dbo.access_control_id_fk")
+  dbo_companies      dbo_companies?      @relation(fields: [company_id], references: [id], onDelete: Cascade, map: "dbo.user_dbo.companies_id_fk")
+  dbo_call           dbo_call[]
+  dbo_call_note      dbo_call_note[]
+  dbo_user_business  dbo_user_business?
+
+  @@map("dbo.user")
+}
+
+model dbo_user_business {
+  id         String     @id(map: "table_name_pk") @unique(map: "table_name_id_uindex") @db.VarChar(50)
+  user_id    String     @unique(map: "table_name_user_id_uindex") @db.VarChar(50)
+  cpf        String     @unique(map: "table_name_cpf_uindex") @db.VarChar(50)
+  address    String?    @db.VarChar(50)
+  uf         String?    @db.VarChar(5)
+  country    String?    @db.VarChar(50)
+  phone_1    String?    @db.VarChar(50)
+  phone_2    String?    @db.VarChar(50)
+  status     String     @db.VarChar(50)
+  dbo_status dbo_status @relation(fields: [status], references: [id], onDelete: Cascade, map: "dbo.user_business_dbo.status_id_fk")
+  dbo_user   dbo_user   @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "table_name_dbo.user_id_fk")
+
+  @@map("dbo.user_business")
+}
+
+model dbo_access_control {
+  id         Int         @id(map: "dbo.access_control_pk") @unique(map: "dbo.access_control_id_uindex") @default(dbgenerated("nextval('\"dbo.access_control_id_seq1\"'::regclass)"))
+  sector_id  String?     @db.VarChar(50)
+  role_id    String?     @db.VarChar(50)
+  dbo_role   dbo_role?   @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "dbo.access_control_dbo.role_id_fk")
+  dbo_sector dbo_sector? @relation(fields: [sector_id], references: [id], onDelete: Cascade, map: "dbo.access_control_dbo.sector_id_fk")
+  dbo_user   dbo_user[]
+
+  @@map("dbo.access_control")
+}
+
+model dbo_call {
+  id              Int             @id(map: "dbo.call_pk") @unique(map: "dbo.call_id_uindex") @default(dbgenerated("nextval('\"dbo.Call_id_seq\"'::regclass)"))
+  sector          String          @db.VarChar(50)
+  description     String?         @db.VarChar(500)
+  user            String          @db.VarChar(50)
+  status          Int
+  created_at      DateTime        @db.Timestamp(6)
+  closed_at       DateTime?       @db.Timestamp(6)
+  company         String          @db.VarChar(50)
+  dbo_companies   dbo_companies   @relation(fields: [company], references: [id], onDelete: Cascade, map: "dbo.call_dbo.companies_id_fk")
+  dbo_sector      dbo_sector      @relation(fields: [sector], references: [id], onDelete: Cascade, map: "dbo.call_dbo.sector_id_fk")
+  dbo_call_status dbo_call_status @relation(fields: [status], references: [id], onDelete: Cascade, map: "dbo.call_dbo.call_status_id_fk")
+  dbo_user        dbo_user        @relation(fields: [user], references: [id], onDelete: Cascade, map: "dbo.call_dbo.user_id_fk")
+  dbo_call_note   dbo_call_note[]
+
+  @@map("dbo.call")
+}
+
+model dbo_call_note {
+  id          Int       @id(map: "dbo.call_note_pk") @unique(map: "dbo.call_note_id_uindex") @default(dbgenerated("nextval('\"dbo.call_note_id_seq\"'::regclass)"))
+  call_id     Int
+  description String?   @db.VarChar(50)
+  user_id     String?   @db.VarChar(50)
+  created_at  DateTime? @db.Timestamp(6)
+  dbo_call    dbo_call  @relation(fields: [call_id], references: [id], onDelete: Cascade, map: "dbo.call_note_dbo.call_id_fk")
+  dbo_user    dbo_user? @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "dbo.call_note_dbo.user_id_fk")
+
+  @@map("dbo.call_note")
+}
+
+model dbo_call_status {
+  id       Int        @id(map: "dbo.call_status_pk") @unique(map: "dbo.call_status_id_uindex") @default(dbgenerated("nextval('\"dbo.call_status_id_seq\"'::regclass)"))
+  title    String?    @db.VarChar(50)
+  dbo_call dbo_call[]
+
+  @@map("dbo.call_status")
+}
+
+model dbo_companies {
+  id       String     @id(map: "dbo.companies_pk") @unique(map: "dbo.companies_id_uindex") @db.VarChar(50)
+  name     String?    @db.VarChar(50)
+  cnpj     String?    @db.VarChar(50)
+  dbo_call dbo_call[]
+  dbo_user dbo_user[]
+
+  @@map("dbo.companies")
+}

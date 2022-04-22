@@ -1,0 +1,1 @@
+INSERT INTO public."dbo.call" (id, sector, description, "user", status, created_at, closed_at, company) VALUES (1, '6703d303103a8c47fcc82a84ca70e25a', 'teste', '5fdf3c9613e94f5ba72ec062ab225ec5', 1, '1970-01-01 00:00:00.000000', null, '03c81238c26b11ec9d640242ac120002');
